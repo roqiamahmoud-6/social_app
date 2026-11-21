@@ -1,0 +1,1 @@
+{"version":3,"file":"globalErrorHandling.js","sourceRoot":"","sources":["../../../src/common/utilis/globalErrorHandling.ts"],"names":[],"mappings":"AAAA,MAAM,QAAS,SAAQ,KAAK;IACU,UAAU;IAA5C,YAAY,OAAc,EAAQ,UAAU,GAAW,GAAG;QACtD,KAAK,CAAC,OAAO,CAAC,CAAA;0BADgB,UAAU;IAE5C,CAAC;CACJ;AAED,eAAe,QAAQ,CAAA"}
