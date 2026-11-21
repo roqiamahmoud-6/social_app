@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { gender, provider, role } from "../../../common/utilis/enum.js";
+import { gender, privacy, provider, role } from "../../../common/utilis/enum.js";
 import { date } from "zod";
 export interface Iuser{
    fname: string;
@@ -14,7 +14,8 @@ export interface Iuser{
     isonfirmed?: boolean;
     profileImage?: string;
     changeCardintialAT?:Date;
-    provider?:provider
+    provider?:provider;
+    privacy?:privacy
 }
 const authSchema= new mongoose.Schema<Iuser>({
    fname:{

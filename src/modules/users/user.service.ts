@@ -6,7 +6,7 @@ import authrepo from "../auth/auth.repo.js"
 import AppError from "../../common/utilis/globalErrorHandling.js"
 import { Iuserr } from "../../db/models/users/user.mode.js"
 import { Encrypt } from "../../db/security/encryption.js"
-import { gender } from "../../common/utilis/enum.js"
+import { gender, privacy } from "../../common/utilis/enum.js"
 import { Types } from "mongoose"
 import relationRepo from "../relation/relation.repo.js"
 import { Iuser } from "../../db/models/auth/auth.model.js"
@@ -171,6 +171,96 @@ class userService{
 
 
 }
+
+    async userSearch  (req:Request,res:Response,next:NextFunction){
+        try{
+        const { token }: any = req.headers
+        const { fname }: any  = req.query
+        if (!token) { return res.status(401).json({ message: "you must send token" }) }
+        const decoded = jwt.verify(token, secret_key) as jwt.JwtPayload & { id: string }
+        if (!decoded?.id) { return res.status(401).json({ message: "invalid token" })}
+        const user = await db.findbyid({ id: decoded.id})
+        if (!user) { return res.status(404).json({ message: "user not exist" }) }
+
+        const result =await db.findall({
+            condition:{fname},
+            projection:{
+               fname:1,
+               lname:1,
+               email:1,
+               gender:1, 
+               phone:1,
+               profileImage:1,
+            }
+        })
+        res.status(200).json({result})
+    }catch(err){
+            const error =err as AppError
+            res.status(400).json({message:error.message, stack:error.stack})
+        }
+
+
+}
+
+    async suggestion  (req:Request,res:Response,next:NextFunction){
+        try{
+        const { token }: any = req.headers
+        if (!token) { return res.status(401).json({ message: "you must send token" }) }
+        const decoded = jwt.verify(token, secret_key) as jwt.JwtPayload & { id: string }
+        if (!decoded?.id) { return res.status(401).json({ message: "invalid token" })}
+        const user = await db.findbyid({ id: decoded.id})
+        if (!user) { return res.status(404).json({ message: "user not exist" }) }
+          const myRelation = await relation.findall({
+            condition:{follower:user._id},
+            projection:{following:1}
+        })
+        let suggestion= []
+        for(const r of myRelation){
+             const relationUsers = await relation.findall({
+                condition:{follower:r.following},
+                projection:{following:1}
+            })
+            for(const item of relationUsers){
+                suggestion.push(item.following)
+            }
+        }
+        res.status(200).json({suggestion})
+    }catch(err){
+            const error =err as AppError
+            res.status(400).json({message:error.message, stack:error.stack})
+        }
+
+
+}
+
+    async privateACC  (req:Request,res:Response,next:NextFunction){
+        try{
+        const { token }: any = req.headers
+        if (!token) { return res.status(401).json({ message: "you must send token" }) }
+        const decoded = jwt.verify(token, secret_key) as jwt.JwtPayload & { id: string }
+        if (!decoded?.id) { return res.status(401).json({ message: "invalid token" })}
+        const user = await db.findbyid({ id: decoded.id})
+        if (!user) { return res.status(404).json({ message: "user not exist" }) }
+         if(user.privacy ===privacy.private){
+            throw new AppError("account already private",400)
+        }
+
+        await db.findByIdAndUpdate({
+            id:user._id,
+            updateData:{privacy:privacy.private}
+        })
+
+        res.status(200).json({message:"account changed to private"})
+   
+    }catch(err){
+            const error =err as AppError
+            res.status(400).json({message:error.message, stack:error.stack})
+        }
+
+
+}
+
+
 
 
 }

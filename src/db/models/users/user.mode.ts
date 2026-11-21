@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { gender, provider, role } from "../../../common/utilis/enum.js";
+import { gender, privacy, provider, role } from "../../../common/utilis/enum.js";
 import { date } from "zod";
 export interface Iuserr{
    fname: string;
@@ -8,6 +8,7 @@ export interface Iuserr{
     gender: gender;
     phone?: string;
     profileImage?: string;
+    privacy?: string;
 }
 const userSchema= new mongoose.Schema<Iuserr>({
    fname:{
@@ -31,12 +32,18 @@ const userSchema= new mongoose.Schema<Iuserr>({
     enum: Object.values(gender),
     default: gender.male
     },
+    privacy: {
+    type: String,
+    enum: Object.values(privacy),
+    default: privacy.public
+    },
     phone:String,
     profileImage:String,
 },{
     timestamps:true,
-    strictQuery:true
+    strictQuery:true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 })
-
 
 export const userModel =mongoose.models.user||mongoose.model<Iuserr>("user",userSchema)

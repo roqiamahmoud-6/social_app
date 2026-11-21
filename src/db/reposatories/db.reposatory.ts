@@ -11,7 +11,7 @@ import { Model, ProjectionType, QueryFilter, QueryOptions, UpdateQuery } from "m
        async find({condition,projection= {}}:{condition:QueryFilter<t>,projection?:ProjectionType<t>}){
          return await this.model.findOne(condition,projection)
         }
-      async  findall({  condition = {}, options = {} }:{condition:QueryFilter<t>,options?:QueryOptions<t>}) {
+      async  findall({  condition = {}, options = {} ,projection= {}}:{condition:QueryFilter<t>,options?:QueryOptions<t>,projection?:ProjectionType<t>}) {
          return await this.model.find(condition)
             .skip(options.skip || 0)
             .sort(options.sort || 0)

@@ -10,3 +10,7 @@ export enum provider {
     system="system",
     google="google"
 } 
+export enum privacy {
+    private="private",
+    public="public"
+} 
