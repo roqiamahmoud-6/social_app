@@ -54,4 +54,9 @@ export declare const resetPassword: {
         otp: z.ZodNumber;
     }, z.core.$strict>;
 };
+export declare const signupWithEmail: {
+    body: z.ZodObject<{
+        idToken: z.ZodAny;
+    }, z.core.$strict>;
+};
 //# sourceMappingURL=auth.validation.d.ts.map

@@ -1,49 +1,52 @@
 import authrepo from "./auth.repo.js";
 import AppError from "../../common/utilis/globalErrorHandling.js";
 import { Comparee, Hash } from "../../db/security/hashing.js";
-import { Encrypt } from "../../db/security/encryption.js";
 import redisService from "../../db/connection/connectionRedis.js";
 import { generateOtp, sendEmail } from "../../common/utilis/sendEmail.js";
-import { emailVerify } from "../../common/html/emailVerify.js";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
-import { secret_key, secret_key_refresh } from "../../config/env.servie.js";
+import { clientId, secret_key, secret_key_refresh } from "../../config/env.servie.js";
 import { resetPasswordTemplate } from "../../common/html/resetPassword.js";
-const db = new authrepo;
+import { OAuth2Client } from "google-auth-library";
+import { provider } from "../../common/utilis/enum.js";
+import { successResponse } from "../../common/utilis/successREsponce.js";
+export const db = new authrepo;
 class AuthService {
     constructor() { }
-    async signUp(req, res, next) {
+    signUp = successResponse(async (req, res, next) => {
         try {
             const { fname, lname, phone, password, Cpassword, email, role, gender, profileImage } = req.body;
             const emailExict = await db.find({ condition: { email } });
             if (emailExict) {
                 throw new AppError("email already exist", 400);
             }
-            const encryptedphone = Encrypt(phone) ? Encrypt(phone) : undefined;
-            const hashhpass = await Hash(password);
-            const hashhCpass = await Hash(Cpassword);
-            const otp = generateOtp();
-            const otpp = await redisService.setValue({
-                key: `otp:${email}`,
-                value: otp,
-                ex: 5 * 60
-            });
-            await sendEmail({
-                to: email,
-                subject: "email verify",
-                html: emailVerify(otp)
-            });
+            // const encryptedphone=Encrypt(phone)? Encrypt(phone) : undefined
+            // const hashhpass=await Hash(password) 
+            // const hashhCpass=await Hash(Cpassword) 
+            // const otp=generateOtp()
+            // const otpp:any= await redisService.setValue({
+            //     key:`otp:${email}`,
+            //     value:otp,
+            //     ex:5*60
+            // })
+            // await sendEmail({
+            //     to:email,
+            //     subject:"email verify",
+            //     html:emailVerify(otp)
+            // })
             const user = await db.create({
-                data: { fname, lname, phone: encryptedphone, Cpassword: hashhCpass, password: hashhpass, email, role, gender }
+                data: { fname, lname, phone, Cpassword, password, email, role, gender }
             });
-            res.status(200).json({ message: "please check your email to complete email verify" });
+            return {
+                message: "please check your email to complete email verify"
+            };
         }
         catch (err) {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
-    async emailVerifiction(req, res, next) {
+    });
+    emailVerifiction = successResponse(async (req, res, next) => {
         try {
             const { otp, email } = req.body;
             const correctOtp = await redisService.getValue({
@@ -68,18 +71,22 @@ class AuthService {
             if (!user) {
                 throw new AppError("user not exist");
             }
-            res.status(201).json({ message: "done", user });
+            return {
+                data: user
+            };
         }
         catch (err) {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
-    async login(req, res, next) {
+    });
+    login = successResponse(async (req, res, next) => {
         try {
             const { email, password } = req.body;
             const user = await db.find({
-                condition: { email }
+                condition: { email,
+                    paranoid: false
+                }
             });
             if (!user) {
                 throw new AppError("email not exist", 400);
@@ -103,48 +110,49 @@ class AuthService {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
-    async refreshToken(req, res, next) {
+    });
+    refreshToken = successResponse(async (req, res, next) => {
         try {
             const { refresh_token } = req.headers;
             if (!refresh_token) {
                 return res.status(401).json({ message: "token not exist" });
             }
+            const user = req.user;
             const decoded = jwt.verify(refresh_token, secret_key_refresh);
             if (!decoded?.id) {
                 return res.status(404).json({ message: "invalid token" });
             }
-            const user = await db.findbyid({
-                id: decoded.id
-            });
-            if (!user) {
-                return res.status(404).json({ message: "user not exist" });
-            }
+            //  const user = await db.findbyid({
+            //     id:decoded.id
+            //  })
+            //   if(!user){ return res.status(404).json ({message:"user not exist"})}
             const access_token = jwt.sign({ id: user.id, email: user.email }, secret_key, {
                 expiresIn: 120
             });
-            res.status(200).json({ access_token });
+            return {
+                data: access_token
+            };
         }
         catch (err) {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
-    async revokeToken(req, res, next) {
+    });
+    revokeToken = successResponse(async (req, res, next) => {
         try {
             const { flag } = req.query;
             const { email } = req.body;
-            const { access_token } = req.headers;
-            if (!access_token) {
-                return res.status(401).json({ message: "token not exist" });
-            }
-            const user = await db.find({
-                condition: { email }
-            });
-            if (!user) {
-                return res.status(404).json({ message: "user not exist" });
-            }
-            const decoded = jwt.verify(access_token, secret_key);
+            const user = req.user;
+            const decoded = req.decoded;
+            //  const {access_token} : any =req.headers
+            //  if(!access_token){
+            //   return res.status(401).json ({message:"token not exist"})
+            //  }
+            //  const user:any=await db.find({
+            //   condition:{email}
+            //  })
+            //     if(!user){ return res.status(404).json ({message:"user not exist"})}
+            //     const decoded:any = jwt.verify( access_token,secret_key as string ) as jwt.JwtPayload & { id: string };
             if (!decoded?.id) {
                 return res.status(404).json({ message: "invalid token" });
             }
@@ -175,8 +183,8 @@ class AuthService {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
-    async forgetPassword(req, res, next) {
+    });
+    forgetPassword = successResponse(async (req, res, next) => {
         try {
             const { email } = req.body;
             const user = await db.find({
@@ -216,14 +224,16 @@ class AuthService {
                 html: resetPasswordTemplate(otp)
             });
             await redisService.incr({ key: `otpforgetPass:max:${email}` });
-            res.status(200).json({ message: "check your email" });
+            return {
+                message: "check your email"
+            };
         }
         catch (err) {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
-    async resetPassword(req, res, next) {
+    });
+    resetPassword = successResponse(async (req, res, next) => {
         try {
             const { newPASS, otp, email } = req.body;
             const otpValue = await redisService.getValue({ key: `otpforgetPass:${email}` });
@@ -244,12 +254,53 @@ class AuthService {
                 throw new Error("user not exist");
             }
             await redisService.deleteKey({ key: `otpforgetPass:${email}` });
+            return {
+                message: "updated successfully"
+            };
         }
         catch (err) {
             const error = err;
             res.status(400).json({ message: error.message, stack: error.stack });
         }
-    }
+    });
+    signupWithEmail = successResponse(async (req, res, next) => {
+        try {
+            const { idToken } = req.body;
+            const client = new OAuth2Client();
+            async function verify() {
+                const decoded = await client.verifyIdToken({
+                    idToken,
+                    audience: clientId,
+                });
+                const { given_name, family_name, email, picture, email_verified } = decoded.getPayload();
+                let user = await db.find({ condition: { email: email.toLowerCase() } });
+                if (!user) {
+                    user = await db.create({ data: {
+                            fname: given_name,
+                            lname: family_name,
+                            email,
+                            profileImage: picture,
+                            isonfirmed: email_verified,
+                            provider: provider.google
+                        }
+                    });
+                }
+                const access_token = jwt.sign({ id: user.id }, secret_key, {
+                    expiresIn: 120
+                });
+                const refresh_token = jwt.sign({ id: user.id }, secret_key_refresh, {
+                    expiresIn: "4d"
+                });
+                return {
+                    data: { access_token, refresh_token }
+                };
+            }
+        }
+        catch (err) {
+            const error = err;
+            res.status(400).json({ message: error.message, stack: error.stack });
+        }
+    });
 }
 export default new AuthService();
 //# sourceMappingURL=auth.service.js.map

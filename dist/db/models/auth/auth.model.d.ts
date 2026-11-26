@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { gender, role } from "../../../common/utilis/enum.js";
+import { gender, privacy, provider, role } from "../../../common/utilis/enum.js";
 export interface Iuser {
     fname: string;
     lname: string;
@@ -13,6 +13,9 @@ export interface Iuser {
     isonfirmed?: boolean;
     profileImage?: string;
     changeCardintialAT?: Date;
+    provider?: provider;
+    privacy?: privacy;
+    isDeleated?: boolean;
 }
 export declare const authModel: mongoose.Model<any, {}, {}, {}, any, any, any> | mongoose.Model<Iuser, {}, {}, {}, mongoose.Document<unknown, {}, Iuser, {}, mongoose.DefaultSchemaOptions> & Iuser & {
     _id: mongoose.Types.ObjectId;

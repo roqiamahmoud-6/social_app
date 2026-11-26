@@ -13,9 +13,10 @@ export default abstract class dbReposatory<t> {
     }): Promise<import("mongoose").IfAny<t, any, import("mongoose").Document<unknown, {}, t, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<t> & {
         __v: number;
     } & import("mongoose").AddDefaultId<t, {}, import("mongoose").DefaultSchemaOptions>> | import("mongoose").ProjectedHydratedDocument<t, import("mongoose").ExclusionProjection<t> & import("mongoose").AnyObject, {}, {}, {}> | import("mongoose").ProjectedHydratedDocument<t, import("mongoose").InclusionProjection<t> & import("mongoose").AnyObject, {}, {}, {}> | null>;
-    findall({ condition, options }: {
+    findall({ condition, options, projection }: {
         condition: QueryFilter<t>;
         options?: QueryOptions<t>;
+        projection?: ProjectionType<t>;
     }): Promise<import("mongoose").IfAny<t, any, import("mongoose").Document<unknown, {}, t, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<t> & {
         __v: number;
     } & import("mongoose").AddDefaultId<t, {}, import("mongoose").DefaultSchemaOptions>>[]>;
@@ -25,9 +26,10 @@ export default abstract class dbReposatory<t> {
     }): Promise<import("mongoose").IfAny<t, any, import("mongoose").Document<unknown, {}, t, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<t> & {
         __v: number;
     } & import("mongoose").AddDefaultId<t, {}, import("mongoose").DefaultSchemaOptions>> | null>;
-    findByIdAndUpdate({ id, updateData }: {
+    findByIdAndUpdate({ id, updateData, options }: {
         id: any;
         updateData: UpdateQuery<t>;
+        options?: QueryOptions<t>;
     }): Promise<import("mongoose").IfAny<t, any, import("mongoose").Document<unknown, {}, t, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<t> & {
         __v: number;
     } & import("mongoose").AddDefaultId<t, {}, import("mongoose").DefaultSchemaOptions>> | null>;
@@ -37,5 +39,8 @@ export default abstract class dbReposatory<t> {
     }): Promise<import("mongoose").IfAny<t, any, import("mongoose").Document<unknown, {}, t, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<t> & {
         __v: number;
     } & import("mongoose").AddDefaultId<t, {}, import("mongoose").DefaultSchemaOptions>> | null>;
+    deleteone({ data }: {
+        data: QueryFilter<t>;
+    }): Promise<import("mongodb").DeleteResult>;
 }
 //# sourceMappingURL=db.reposatory.d.ts.map

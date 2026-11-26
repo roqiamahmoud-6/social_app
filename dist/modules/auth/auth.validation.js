@@ -62,4 +62,9 @@ export const resetPassword = {
         otp: z.number()
     })
 };
+export const signupWithEmail = {
+    body: z.strictObject({
+        idToken: z.any()
+    })
+};
 //# sourceMappingURL=auth.validation.js.map

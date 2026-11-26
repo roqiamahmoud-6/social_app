@@ -1,0 +1,1 @@
+{"version":3,"file":"relationModel.d.ts","sourceRoot":"","sources":["../../../../src/db/models/relation/relationModel.ts"],"names":[],"mappings":"AAAA,OAAO,QAAQ,EAAE,EAAE,KAAK,EAAE,MAAM,UAAU,CAAC;AAE3C,MAAM,WAAW,SAAS;IACvB,QAAQ,EAAC,KAAK,CAAC,QAAQ,CAAC;IACxB,SAAS,EAAC,KAAK,CAAC,QAAQ,CAAC;CAC3B;AAmBD,eAAO,MAAM,aAAa;;;;;;;;;;EAAgF,CAAA"}
