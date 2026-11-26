@@ -10,6 +10,7 @@ import { gender, privacy } from "../../common/utilis/enum.js"
 import { Types } from "mongoose"
 import relationRepo from "../relation/relation.repo.js"
 import { Iuser } from "../../db/models/auth/auth.model.js"
+import { successResponse } from "../../common/utilis/successREsponce.js"
 
 const db =new authrepo 
 const relation = new relationRepo
@@ -18,7 +19,7 @@ class userService{
     constructor(){}
 
 
-    async getMyProfile  (req:Request,res:Response,next:NextFunction){
+     getMyProfile  =successResponse(async (req:Request,res:Response,next:NextFunction)=>{
         try{
         const{token}:any=req.headers
         if(!token){return res.status(401).json({message:"you must send token"})}
@@ -37,16 +38,16 @@ class userService{
         }
     })
     if(!user){ return res.status(404).json ({message:"user not exist"})}
-     res.status(200).json({user})
+     return{data:user}
     }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
         }
 
 
-}
+})
 
-    async updateProfile  (req:Request,res:Response,next:NextFunction){
+     updateProfile  = successResponse( async (req:Request,res:Response,next:NextFunction)=>{
         try{
        const{token}:any=req.headers
          if(!token){return res.status(401).json({message:"you must send token"})}
@@ -84,7 +85,10 @@ class userService{
             }
         })
        if(!user){ return res.status(404).json ({message:"user not exist"})}
-     res.status(200).json({message:"updated successfully",user})
+    return{
+        message:"updated successfully",
+        data:user
+    }
 
     }catch(err){
             const error =err as AppError
@@ -92,9 +96,9 @@ class userService{
         }
 
 
-}
+})
 
-    async follow  (req:Request,res:Response,next:NextFunction){
+     follow  =successResponse(async (req:Request,res:Response,next:NextFunction)=>{
         try{
 
        const{token}:any=req.headers
@@ -131,9 +135,9 @@ class userService{
         }
 
 
-}
+})
 
-    async unfollow  (req:Request,res:Response,next:NextFunction){
+     unfollow  =successResponse(async (req:Request,res:Response,next:NextFunction)=>{
         try{
         const { token }: any = req.headers
         const { id_user }: any = req.params
@@ -170,9 +174,9 @@ class userService{
         }
 
 
-}
+})
 
-    async userSearch  (req:Request,res:Response,next:NextFunction){
+     userSearch  =successResponse(async (req:Request,res:Response,next:NextFunction)=>{
         try{
         const { token }: any = req.headers
         const { fname }: any  = req.query
@@ -200,9 +204,9 @@ class userService{
         }
 
 
-}
+})
 
-    async suggestion  (req:Request,res:Response,next:NextFunction){
+     suggestion =successResponse(async  (req:Request,res:Response,next:NextFunction)=>{
         try{
         const { token }: any = req.headers
         if (!token) { return res.status(401).json({ message: "you must send token" }) }
@@ -231,9 +235,9 @@ class userService{
         }
 
 
-}
+})
 
-    async privateACC  (req:Request,res:Response,next:NextFunction){
+     privateACC  =successResponse(async (req:Request,res:Response,next:NextFunction)=>{
         try{
         const { token }: any = req.headers
         if (!token) { return res.status(401).json({ message: "you must send token" }) }
@@ -258,7 +262,7 @@ class userService{
         }
 
 
-}
+})
 
 
 

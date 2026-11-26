@@ -17,42 +17,48 @@ import { any, string } from "zod"
 import { resetPasswordTemplate } from "../../common/html/resetPassword.js"
 import {OAuth2Client} from "google-auth-library"
 import { provider } from "../../common/utilis/enum.js"
-const db =new authrepo 
+import { exists } from "fs"
+import { successResponse } from "../../common/utilis/successREsponce.js"
+export const db =new authrepo 
 
 class AuthService{
 
     constructor(){}
 
-    async signUp(req:Request,res:Response,next:NextFunction){
+     signUp = successResponse(async(req:Request,res:Response,next:NextFunction)=>{
         try{
 
             const {fname,lname,phone,password,Cpassword,email,role,gender,profileImage}:Iuser=req.body
             const emailExict=await db.find({condition:{email}})
             if(emailExict){throw new AppError("email already exist",400)}
-            const encryptedphone=Encrypt(phone)? Encrypt(phone) : undefined
-            const hashhpass=await Hash(password) 
-            const hashhCpass=await Hash(Cpassword) 
-            const otp=generateOtp()
-            const otpp:any= await redisService.setValue({
-                key:`otp:${email}`,
-                value:otp,
-                ex:5*60
-            })
-            await sendEmail({
-                to:email,
-                subject:"email verify",
-                html:emailVerify(otp)
-            })
+            // const encryptedphone=Encrypt(phone)? Encrypt(phone) : undefined
+            // const hashhpass=await Hash(password) 
+            // const hashhCpass=await Hash(Cpassword) 
+            // const otp=generateOtp()
+            // const otpp:any= await redisService.setValue({
+            //     key:`otp:${email}`,
+            //     value:otp,
+            //     ex:5*60
+            // })
+            // await sendEmail({
+            //     to:email,
+            //     subject:"email verify",
+            //     html:emailVerify(otp)
+            // })
             const user:HydratedDocument<Iuser> = await db.create ({
-                 data:{fname,lname,phone:encryptedphone,Cpassword:hashhCpass,password:hashhpass,email,role,gender}as Partial<Iuser>})
-            res.status(200).json({message:"please check your email to complete email verify"})
+                 data:{fname,lname,phone,Cpassword,password,email,role,gender}as Partial<Iuser>})
+            return{
+              message:"please check your email to complete email verify"
+            }
+
         }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
         }
 
-    }
-    async emailVerifiction(req:Request,res:Response,next:NextFunction){
+    })
+  
+     emailVerifiction =successResponse(async(req:Request,res:Response,next:NextFunction)=>{
         try{
            const {otp,email}:any=req.body
            const correctOtp=await redisService.getValue({
@@ -71,18 +77,21 @@ class AuthService{
                 updateData:{emailVerify:true}
             })
             if(!user){throw new AppError("user not exist")}
-            res.status(201).json({message:"done",user})
+            return{
+              data:user
+            }
         }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
         }
-
-    }
-    async login(req:Request,res:Response,next:NextFunction){
+      })
+     login = successResponse(async(req:Request,res:Response,next:NextFunction)=>{
         try{
            const {email,password}:any=req.body
            const user:any=await db.find({
-               condition:{email}
+               condition:{email,
+                paranoid:false
+               }
             })
             if(!user){throw new AppError("email not exist",400)}
             const isValid= await Comparee(password,user.password)
@@ -102,46 +111,51 @@ class AuthService{
             res.status(400).json({message:error.message, stack:error.stack})
         }
 
-    }
+    })
 
-    async refreshToken(req:Request,res:Response,next:NextFunction){
+     refreshToken =successResponse(async(req:Request,res:Response,next:NextFunction)=>{
       try{
        const {refresh_token} : any =req.headers
     if(!refresh_token){
       return res.status(401).json ({message:"token not exist"})
      }
+     const user = req.user
      const decoded = jwt.verify(refresh_token,secret_key_refresh)as jwt.JwtPayload & { id: string }
      if (!decoded?.id){return res.status(404).json({message:"invalid token"})}
-     const user = await db.findbyid({
-        id:decoded.id
-     })
-      if(!user){ return res.status(404).json ({message:"user not exist"})}
+    //  const user = await db.findbyid({
+    //     id:decoded.id
+    //  })
+    //   if(!user){ return res.status(404).json ({message:"user not exist"})}
        
       const access_token =jwt.sign({id:user.id,email:user.email},secret_key,{
          expiresIn:120
       })
-      res.status(200).json({access_token})
+      return{
+        data:access_token
+      }
 
         }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
         }
 
-    }
+    })
 
-    async revokeToken(req:Request,res:Response,next:NextFunction){
+     revokeToken =successResponse(async (req:Request,res:Response,next:NextFunction)=>{
       try{
    const{ flag }=req.query
    const{email}=req.body
-   const {access_token} : any =req.headers
-   if(!access_token){
-    return res.status(401).json ({message:"token not exist"})
-   }
-   const user:any=await db.find({
-    condition:{email}
-   })
-      if(!user){ return res.status(404).json ({message:"user not exist"})}
-      const decoded:any = jwt.verify( access_token,secret_key as string ) as jwt.JwtPayload & { id: string };
+   const user = req.user
+   const decoded =req.decoded
+  //  const {access_token} : any =req.headers
+  //  if(!access_token){
+  //   return res.status(401).json ({message:"token not exist"})
+  //  }
+  //  const user:any=await db.find({
+  //   condition:{email}
+  //  })
+  //     if(!user){ return res.status(404).json ({message:"user not exist"})}
+  //     const decoded:any = jwt.verify( access_token,secret_key as string ) as jwt.JwtPayload & { id: string };
        if (!decoded?.id){return res.status(404).json({message:"invalid token"})}
    if(flag=="all"){
     await db.findoneAndUPDATe({
@@ -171,9 +185,8 @@ class AuthService{
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
         }
-    }
-
-    async forgetPassword(req:Request,res:Response,next:NextFunction){
+    })
+     forgetPassword= successResponse( async (req:Request,res:Response,next:NextFunction)=>{
       try{
          const {email}=req.body
       const user = await db.find({
@@ -213,15 +226,17 @@ class AuthService{
            html:resetPasswordTemplate(otp)
          })
       await redisService.incr({key:`otpforgetPass:max:${email}`}) 
-    res.status(200).json({message:"check your email"})
+   return{
+    message:"check your email"
+   }
          
     }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
     }
-    }
+    })
 
-    async resetPassword(req:Request,res:Response,next:NextFunction){
+     resetPassword= successResponse(async (req:Request,res:Response,next:NextFunction)=>{
       try{
         const {newPASS,otp,email}=req.body
       const otpValue=await redisService.getValue({ key:`otpforgetPass:${email}`})
@@ -242,14 +257,16 @@ class AuthService{
     throw new Error("user not exist");
 } 
   await redisService.deleteKey({ key: `otpforgetPass:${email}` });
+  return{
+    message:"updated successfully"
+  }
     }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
     }
-    }
+    })
 
-
-    async signupWithEmail(req:Request,res:Response,next:NextFunction){
+     signupWithEmail = successResponse( async (req:Request,res:Response,next:NextFunction)=>{
       try{
         const{idToken}=req.body
       const client = new OAuth2Client();
@@ -278,14 +295,16 @@ class AuthService{
       const refresh_token =jwt.sign({id:user.id},secret_key_refresh,{
          expiresIn:"4d"
       })
-     res.status(200).json({tokens:{access_token , refresh_token}})
+     return{
+      data:{access_token,refresh_token}
+     }
   
 }
     }catch(err){
             const error =err as AppError
             res.status(400).json({message:error.message, stack:error.stack})
     }
-    }
+    })
     
     
 }

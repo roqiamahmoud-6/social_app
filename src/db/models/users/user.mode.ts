@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { gender, privacy, provider, role } from "../../../common/utilis/enum.js";
 import { date } from "zod";
+import { Hash } from "../../security/hashing.js";
+import { salt_or_round } from "../../../config/env.servie.js";
 export interface Iuserr{
    fname: string;
     lname: string;
@@ -45,5 +47,6 @@ const userSchema= new mongoose.Schema<Iuserr>({
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 })
+
 
 export const userModel =mongoose.models.user||mongoose.model<Iuserr>("user",userSchema)
